@@ -103,6 +103,43 @@ if not os.getenv("DATABASE_URL"):
     load_dotenv("nextjs_space/.env")
 
 # Database Connection Helper
+def init_db(conn):
+    try:
+        with conn.cursor() as cur:
+            # Create Customer table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS "Customer" (
+                    id VARCHAR(255) PRIMARY KEY,
+                    "companyName" VARCHAR(255) NOT NULL,
+                    "contactPerson" VARCHAR(255) NOT NULL,
+                    phone VARCHAR(255),
+                    email VARCHAR(255),
+                    address TEXT,
+                    sector VARCHAR(255),
+                    notes TEXT,
+                    "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+                    "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+                );
+            """)
+            # Create Project table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS "Project" (
+                    id VARCHAR(255) PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'TEKLIF',
+                    "startDate" TIMESTAMP,
+                    "endDate" TIMESTAMP,
+                    budget DOUBLE PRECISION,
+                    "customerId" VARCHAR(255) NOT NULL,
+                    "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+                    "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+                    CONSTRAINT fk_customer FOREIGN KEY ("customerId") REFERENCES "Customer" (id) ON DELETE CASCADE
+                );
+            """)
+    except Exception as e:
+        st.warning(f"Tablolar otomatik oluşturulurken uyarı alındı: {e}")
+
 @st.cache_resource
 def get_db_connection():
     db_url = os.getenv("DATABASE_URL")
@@ -113,6 +150,7 @@ def get_db_connection():
         # PostgreSQL connection (psycopg2 auto-parses connection URLs)
         conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
         conn.autocommit = True
+        init_db(conn)
         return conn
     except Exception as e:
         st.error(f"Veritabanı bağlantısı kurulamadı: {e}")
