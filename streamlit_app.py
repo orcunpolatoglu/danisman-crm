@@ -141,6 +141,23 @@ def init_db(conn):
         st.warning(f"Tablolar otomatik oluşturulurken uyarı alındı: {e}")
 
 @st.cache_resource
+def ensure_db_initialized():
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        return False
+    try:
+        conn = psycopg2.connect(db_url)
+        conn.autocommit = True
+        init_db(conn)
+        conn.close()
+        return True
+    except Exception as e:
+        st.warning(f"Veritabanı ilklendirilemedi: {e}")
+        return False
+
+# Initialize database once at startup
+ensure_db_initialized()
+
 def get_db_connection():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
@@ -150,7 +167,6 @@ def get_db_connection():
         # PostgreSQL connection (psycopg2 auto-parses connection URLs)
         conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
         conn.autocommit = True
-        init_db(conn)
         return conn
     except Exception as e:
         st.error(f"Veritabanı bağlantısı kurulamadı: {e}")
@@ -183,17 +199,23 @@ STATUS_COLORS = {
 # Database Query Runners
 def run_query(query, params=None):
     conn = get_db_connection()
-    with conn.cursor() as cur:
-        cur.execute(query, params or ())
-        try:
-            return cur.fetchall()
-        except psycopg2.ProgrammingError:
-            return None
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query, params or ())
+            try:
+                return cur.fetchall()
+            except psycopg2.ProgrammingError:
+                return None
+    finally:
+        conn.close()
 
 def run_insert_or_update(query, params):
     conn = get_db_connection()
-    with conn.cursor() as cur:
-        cur.execute(query, params)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+    finally:
+        conn.close()
 
 # Sidebar Navigation
 st.sidebar.markdown("""
