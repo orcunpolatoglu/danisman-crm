@@ -403,7 +403,7 @@ elif page == "👥 Müşteriler":
                 
             notes = st.text_area("Müşteri Notları")
             
-            submitted = st.form_submit_form_button("Müşteriyi Kaydet")
+            submitted = st.form_submit_button("Müşteriyi Kaydet")
             if submitted:
                 if not company_name or not contact_person:
                     st.warning("Firma Adı ve Yetkili Kişi zorunludur!")
@@ -529,7 +529,7 @@ elif page == "💼 Projeler":
                     
                 p_desc = st.text_area("Açıklama")
                 
-                submitted_p = st.form_submit_form_button("Projeyi Kaydet")
+                submitted_p = st.form_submit_button("Projeyi Kaydet")
                 if submitted_p:
                     if not p_name:
                         st.warning("Proje adı zorunludur!")
